@@ -1,6 +1,6 @@
+#Plot 2
+
 require(lubridate)
-require(ggplot2)
-require(reshape2)
 
 #Download and read files
 if(!(file.exists("Source_Classification_Code.rds"))){
@@ -9,32 +9,29 @@ if(!(file.exists("Source_Classification_Code.rds"))){
   file.remove("dataset.zip")
 }
 
+#Variable creation and general cleanup
 SCC <- readRDS(file = "Source_Classification_Code.rds")
 for(i in names(SCC)){
-    SCC[[i]] <- as.factor(SCC[[i]])
-    SCC[[i]][SCC[[i]]==""] <- NA
-    SCC[[i]][SCC[[i]]==" "] <- NA
+  SCC[[i]] <- as.factor(SCC[[i]])
+  SCC[[i]][SCC[[i]]==""] <- NA
+  SCC[[i]][SCC[[i]]==" "] <- NA
 }
 SCC <- droplevels(SCC)
-#maybe not even useful...
 SCC$Created_Date <- mdy_hms(SCC$Created_Date)
 SCC$Revised_Date <- mdy_hms(SCC$Revised_Date)
 
-#clean up
 NEI <- readRDS(file = "summarySCC_PM25.rds")
 NEI$Pollutant <- NULL
-
 for(i in names(NEI)){
-    if(i!="Emissions"){
-        NEI[[i]] <- as.factor(NEI[[i]])
-    }
+  if(i!="Emissions"){
+    NEI[[i]] <- as.factor(NEI[[i]])
+  }
 }
-
 NEI$fips[NEI$fips == "   NA"] <- NA
 NEI$fips <- droplevels(NEI$fips)
+rm(i)
 
-
-total.emissions <- aggregate(Emissions ~ year, data = NEI, sum)
+#### Cleanup ends here ####
 
 baltimore.fips <- "24510"
 
@@ -42,5 +39,9 @@ baltimore <- NEI[NEI$fips==baltimore.fips,]
 
 baltimore.total.emissions <- aggregate(Emissions ~ year, data = baltimore, sum)
 
-baltimore.bytype <- aggregate(Emissions ~ year + type, data = baltimore, sum)
-baltimore.bytype <- dcast(baltimore.bytype, year ~ type)
+png(filename = "plot2.png", width = 480, height = 480, units = "px")
+
+barplot(baltimore.total.emissions$Emissions, names.arg = baltimore.total.emissions$year, xlab = "Year", ylab = "Emissions (Tons of PM2.5)", main = "Total Emissions of PM2.5 in Baltimore")
+
+dev.off()
+
